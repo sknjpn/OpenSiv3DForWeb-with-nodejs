@@ -29,6 +29,7 @@
 -lSDL2
 -lwebp
 -lz
+-lwebsocket.js
 
 --emrun
 -s FULL_ES3=1
