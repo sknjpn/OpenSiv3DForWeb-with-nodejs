@@ -1,0 +1,8 @@
+{
+  "name": "nodejs-server",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "git@github.com:sknjpn/OpenSiv3DForWeb-with-nodejs.git",
+  "author": "sknjpn <sknjpn@gmail.com>",
+  "license": "MIT"
+}
