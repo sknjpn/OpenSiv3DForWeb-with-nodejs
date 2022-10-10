@@ -1,11 +1,17 @@
-console.log('Hello World!');
+// Echo Server
+
+var shortid = require('shortid');
 
 var ws = require('ws');
 var server = new ws.Server({ port: 3000 });
 
-server.on('connection', ws => {
+server.on('connection', socket => {
+    console.log('connection start')
 
-    ws.on('message', message => {
+    socket.send(shortid.generate(), { binary: false });
+
+    socket.on('message', message => {
+        console.log('Receive:');
         console.log(message);
 
         server.clients.forEach(client => {
@@ -13,7 +19,7 @@ server.on('connection', ws => {
         });
     });
 
-    ws.on('close', () => {
-        console.log('close');
+    socket.on('close', () => {
+        console.log('connection close');
     });
 });
