@@ -5,7 +5,18 @@ class WebSocket
 {
     static EM_BOOL WebSocketOpen(int eventType, const EmscriptenWebSocketOpenEvent *e, void *userData)
     {
+        WebSocket *socket = (WebSocket *)userData;
+
         Console << U"WebSocket Open";
+
+        if (!socket->m_bufferSend.empty())
+        {
+            for (const auto &buffer : socket->m_bufferSend)
+                emscripten_websocket_send_utf8_text(socket->m_socket, buffer.c_str());
+
+            socket->m_bufferSend.clear();
+        }
+
         return 0;
     }
 
@@ -23,8 +34,12 @@ class WebSocket
 
     static EM_BOOL WebSocketMessage(int eventType, const EmscriptenWebSocketMessageEvent *e, void *userData)
     {
+        WebSocket *socket = (WebSocket *)userData;
+
         Console << U"WebSocket Message numBytes=" << e->numBytes;
         Console << U"Text:" << Unicode::FromUTF8(std::string((char *)e->data));
+
+        socket->m_bufferRecv.emplace_back(std::string((char *)e->data));
 
         /*if (e->isText)
         {
@@ -48,30 +63,44 @@ class WebSocket
         return 0;
     }
 
-    EMSCRIPTEN_WEBSOCKET_T socket;
+    EMSCRIPTEN_WEBSOCKET_T m_socket;
+
+    bool m_hasConnection = false;
+    std::vector<std::string> m_bufferSend;
+    std::vector<std::string> m_bufferRecv;
 
 public:
     WebSocket(const char *url)
     {
-        EmscriptenWebSocketCreateAttributes attr;
-        emscripten_websocket_init_create_attributes(&attr);
-        attr.url = url;
+        EmscriptenWebSocketCreateAttributes attributes;
+        emscripten_websocket_init_create_attributes(&attributes);
+        attributes.url = url;
 
-        socket = emscripten_websocket_new(&attr);
-
-        emscripten_websocket_set_onopen_callback(socket, this, WebSocketOpen);
-        emscripten_websocket_set_onclose_callback(socket, this, WebSocketClose);
-        emscripten_websocket_set_onerror_callback(socket, this, WebSocketError);
-        emscripten_websocket_set_onmessage_callback(socket, this, WebSocketMessage);
+        m_socket = emscripten_websocket_new(&attributes);
+        emscripten_websocket_set_onopen_callback(m_socket, this, WebSocketOpen);
+        emscripten_websocket_set_onclose_callback(m_socket, this, WebSocketClose);
+        emscripten_websocket_set_onerror_callback(m_socket, this, WebSocketError);
+        emscripten_websocket_set_onmessage_callback(m_socket, this, WebSocketMessage);
     }
 
-    void SendBinary(uint8_t *binary, size_t size)
+    bool hasReceivedText() const { return !m_bufferRecv.empty(); }
+
+    std::string getReceivedTextAndPopFromBuffer()
     {
-        emscripten_websocket_send_binary(socket, binary, size);
+        std::string text = m_bufferRecv.front();
+        m_bufferRecv.erase(m_bufferRecv.begin());
+        return text;
     }
 
     void SendText(const std::string &text)
     {
-        emscripten_websocket_send_utf8_text(socket, text.c_str());
+        if (m_hasConnection)
+        {
+            emscripten_websocket_send_utf8_text(m_socket, text.c_str());
+        }
+        else
+        {
+            m_bufferSend.emplace_back(text);
+        }
     }
 };

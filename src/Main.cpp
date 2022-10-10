@@ -9,6 +9,7 @@ void Main()
     Console << U"Hello World!";
 
     WebSocket webSocket("wss://snjp.me/server");
+    webSocket.SendText("Hello World!");
 
     Scene::SetBackground(ColorF{0.8, 0.9, 1.0});
 
