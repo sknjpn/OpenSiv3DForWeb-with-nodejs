@@ -1,7 +1,7 @@
 console.log('Hello World!');
 
 var ws = require('ws');
-var server = new ws.Server({ port: 3000, path: 'server' });
+var server = new ws.Server({ port: 3000 });
 
 server.on('connection', ws => {
 
@@ -9,7 +9,7 @@ server.on('connection', ws => {
         console.log(message);
 
         server.clients.forEach(client => {
-            client.send(message);
+            client.send(message, { binary: false });
         });
     });
 
