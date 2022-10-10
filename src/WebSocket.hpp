@@ -9,6 +9,8 @@ class WebSocket
 
         Console << U"WebSocket Open";
 
+        socket->m_hasConnection = true;
+
         if (!socket->m_bufferSend.empty())
         {
             for (const auto &buffer : socket->m_bufferSend)
@@ -22,13 +24,23 @@ class WebSocket
 
     static EM_BOOL WebSocketClose(int eventType, const EmscriptenWebSocketCloseEvent *e, void *userData)
     {
+        WebSocket *socket = (WebSocket *)userData;
+
         Console << U"WebSocket Close";
+
+        socket->m_hasConnection = false;
+
         return 0;
     }
 
     static EM_BOOL WebSocketError(int eventType, const EmscriptenWebSocketErrorEvent *e, void *userData)
     {
+        WebSocket *socket = (WebSocket *)userData;
+
         Console << U"WebSocket Error eventType=" << eventType;
+
+        socket->m_hasConnection = false;
+
         return 0;
     }
 

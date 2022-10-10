@@ -18,7 +18,7 @@ server.on('connection', socket => {
         try {
             const obj = JSON.parse(message);
             obj.uid = socket.uid;
-
+            obj.type = 'message';
             server.clients.forEach(client => {
                 client.send(JSON.stringify(obj), { binary: false });
             });
